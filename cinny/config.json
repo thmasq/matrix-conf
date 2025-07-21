@@ -1,0 +1,17 @@
+{
+  "defaultHomeserver": 0,
+  "homeserverList": [
+    "matrix.tantalius.com"
+  ],
+  "allowCustomHomeservers": false,
+  "featuredCommunities": {
+    "openAsDefault": false,
+    "spaces": [],
+    "rooms": [],
+    "servers": ["matrix.tantalius.com"]
+  },
+  "hashRouter": {
+    "enabled": false,
+    "basename": "/"
+  }
+}

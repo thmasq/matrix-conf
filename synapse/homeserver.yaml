@@ -1,0 +1,138 @@
+server_name: matrix.tantalius.com
+public_baseurl: https://matrix.tantalius.com
+pid_file: /data/homeserver.pid
+report_stats: false
+
+listeners:
+  - port: 8008
+    tls: false
+    type: http
+    x_forwarded: true
+    bind_addresses: ['0.0.0.0']
+    resources:
+      - names: [client, federation]
+        compress: false
+
+# Trust forwarded headers from nginx (important for Cloudflare tunnels)
+trusted_key_servers: []
+suppress_key_server_warning: true
+
+# Database configuration
+database:
+  name: psycopg2
+  args:
+    user: synapse
+    password: {{POSTGRES_PASSWORD}}
+    database: synapse
+    host: postgres
+    port: 5432
+    cp_min: 5
+    cp_max: 10
+
+# Valkey configuration for replication
+redis:
+  enabled: true
+  host: valkey
+  port: 6379
+
+# Logging
+log_config: "/data/log.config"
+
+# Media store
+media_store_path: "/data/media_store"
+max_upload_size: 50M
+max_image_pixels: 32M
+
+# Security
+enable_registration: false
+enable_registration_without_verification: false
+bcrypt_rounds: 12
+
+# Federation (disabled as requested)
+federation_domain_whitelist: []
+send_federation: false
+federation_whitelist: []
+
+# Admin contact
+admin_contact: 'mailto:admin@tantalius.com'
+
+# Registration shared secret (generate with: python -c 'import secrets; print(secrets.token_hex(32))')
+registration_shared_secret: {{REGISTRATION_SHARED_SECRET}}
+
+# Macaroon secret key (generate with: python -c 'import secrets; print(secrets.token_hex(32))')
+macaroon_secret_key: {{MACAROON_SECRET_KEY}}
+
+# Form secret (generate with: python -c 'import secrets; print(secrets.token_hex(32))')
+form_secret: {{FORM_SECRET}}
+
+# Signing key path
+signing_key_path: "/data/matrix.tantalius.com.signing.key"
+
+# Allow guest access
+allow_guest_access: false
+
+# URL previews
+url_preview_enabled: true
+url_preview_ip_range_blacklist:
+  - '127.0.0.0/8'
+  - '10.0.0.0/8'
+  - '172.16.0.0/12'
+  - '192.168.0.0/16'
+  - '100.64.0.0/10'
+  - '169.254.0.0/16'
+  - '::1/128'
+  - 'fe80::/64'
+  - 'fc00::/7'
+
+# Room directory
+enable_room_list_search: true
+
+# Presence
+presence:
+  enabled: true
+
+# Push notifications
+push:
+  enabled: true
+
+# User directory
+user_directory:
+  enabled: true
+  search_all_users: true
+
+# Email configuration (optional)
+# email:
+#   smtp_host: your-smtp-server.com
+#   smtp_port: 587
+#   smtp_user: your-email@example.com
+#   smtp_pass: your-password
+#   require_transport_security: true
+#   notif_from: "Matrix <noreply@tantalius.com>"
+
+# Rate limiting
+rc_message:
+  per_second: 0.2
+  burst_count: 10
+
+rc_registration:
+  per_second: 0.17
+  burst_count: 3
+
+rc_login:
+  address:
+    per_second: 0.17
+    burst_count: 3
+  account:
+    per_second: 0.17
+    burst_count: 3
+  failed_attempts:
+    per_second: 0.17
+    burst_count: 3
+
+# Security settings
+require_auth_for_profile_requests: true
+limit_profile_requests_to_users_who_share_rooms: true
+include_profile_data_on_invite: false
+
+# Important for Cloudflare tunnels - trust X-Forwarded headers
+use_forwarded_headers: true
