@@ -29,21 +29,21 @@ class RoomManager:
 
         for room in rooms:
             if filter_type == "name":
-                name = room.get("name", "").lower()
+                name = (room.get("name") or "").lower()
                 if filter_text in name:
                     filtered_rooms.append(room)
             elif filter_type == "alias":
-                alias = room.get("canonical_alias", "").lower()
+                alias = (room.get("canonical_alias") or "").lower()
                 if filter_text in alias:
                     filtered_rooms.append(room)
             elif filter_type == "id":
-                room_id = room.get("room_id", "").lower()
+                room_id = (room.get("room_id") or "").lower()
                 if filter_text in room_id:
                     filtered_rooms.append(room)
             elif filter_type == "any":
-                name = room.get("name", "").lower()
-                alias = room.get("canonical_alias", "").lower()
-                room_id = room.get("room_id", "").lower()
+                name = (room.get("name") or "").lower()
+                alias = (room.get("canonical_alias") or "").lower()
+                room_id = (room.get("room_id") or "").lower()
                 if (
                     filter_text in name
                     or filter_text in alias
