@@ -11,7 +11,7 @@ This repository provides a production-ready Matrix homeserver setup with the fol
 - **Valkey**: Redis-compatible cache and session storage
 - **Nginx**: Reverse proxy and load balancer
 - **Cinny**: Modern Matrix web client
-- **Admin Scripts**: Room management and permission tools
+- **Admin Tool**: Python-based administration interface
 
 ### Architecture
 
@@ -26,6 +26,7 @@ This repository provides a production-ready Matrix homeserver setup with the fol
 - Domain names configured with DNS records
 - SSL/TLS certificates (recommended: Cloudflare tunnels or Let's Encrypt)
 - Basic understanding of Matrix protocol
+- Python 3.6+ (for administration tool)
 
 ## Initial Setup
 
@@ -73,7 +74,7 @@ find . -type f -name "*.yml" -o -name "*.yaml" -o -name "*.conf" -o -name "*.jso
 xargs sed -i 's/chat\.tantalius\.com/chat.yourdomain.com/g'
 ```
 
-### 4. Configure Admin Contact
+### 4. Configure Admin Contact (Optional)
 
 Update the admin contact in `synapse/homeserver.yaml`:
 ```yaml
@@ -183,30 +184,75 @@ docker-compose exec synapse register_new_matrix_user -c /data/homeserver.yaml ht
 
 ## Administration
 
-### Room Management
+### Matrix Administration Tool
 
-Use the provided scripts for room administration:
+The repository includes a comprehensive Python-based administration tool (`admin.py`) that provides an interactive interface for managing your Matrix server.
 
+#### Features
+
+**Room Management:**
+- List all rooms with filtering and sorting capabilities
+- Delete rooms with interactive selection and batch operations
+- Fix room permissions for Element Call compatibility
+
+**User Management:**
+- List all users with filtering and sorting
+- Create new users with admin privileges
+- Deactivate users with interactive selection and batch operations
+
+**Server Information:**
+- Display server statistics (users, rooms, media usage)
+- Test server connection and admin token validity
+
+#### Setup and Usage
+
+1. **Run the administration tool:**
+   ```bash
+   python3 admin.py
+   ```
+
+2. **First-time setup:**
+   - The tool will automatically load configuration from your `.env` file
+   - If configuration is missing, it will prompt for homeserver URL and admin token
+   - Test connection will verify your setup
+
+3. **Navigation:**
+   - Use the numbered menu options to navigate
+   - Filter and sort lists using interactive prompts
+   - Select multiple items using ranges (e.g., `1-5,7,9-12`)
+   - Use pagination controls for large lists
+
+#### Example Operations
+
+**List and filter rooms:**
 ```bash
-# Make scripts executable
-chmod +x delete-room.sh fix-permissions.sh
+# Run admin tool
+python3 admin.py
 
-# List all rooms
-./delete-room.sh list
+# Select option 1 (List all rooms)
+# Use 'f' to filter by name, alias, member count, etc.
+# Use 's' to sort by various criteria
+```
 
-# Delete a room
-./delete-room.sh delete '#room:matrix.yourdomain.com'
+**Delete multiple rooms:**
+```bash
+# Select option 2 (Delete room)
+# Choose option 1 (Select from list)
+# Filter/sort as needed, then select rooms: "1,3-5,7"
+# Confirm deletion and monitor progress
+```
 
-# Fix permissions for Element Call
-./fix-permissions.sh fix '#room:matrix.yourdomain.com'
-
-# Fix permissions for all rooms
-./fix-permissions.sh fix-all
+**Batch user management:**
+```bash
+# Select option 6 (Deactivate user)
+# Choose option 1 (Select from list)
+# Filter users and select multiple: "2-4,8"
+# Confirm deactivation
 ```
 
 ### Admin API Access
 
-Access Synapse admin APIs using your admin token:
+Access Synapse admin APIs directly using your admin token:
 
 ```bash
 # List users
@@ -294,6 +340,18 @@ curl https://matrix.yourdomain.com/_matrix/federation/v1/version
 curl https://matrix.yourdomain.com/_matrix/key/v2/server
 ```
 
+### Administration Tool Issues
+
+```bash
+# Test admin tool connection
+python3 admin.py
+# Select option 8 (Test connection)
+
+# Check admin token validity
+curl -H "Authorization: Bearer your_admin_token" \
+https://matrix.yourdomain.com/_matrix/client/r0/account/whoami
+```
+
 ## Monitoring
 
 ### Basic Health Checks
@@ -331,16 +389,17 @@ Logs are configured with rotation:
    ```
 
 3. **Media cleanup** (as needed):
+   Use the admin tool (option 7) to check media usage statistics, or query directly:
    ```bash
-   # List media usage
    curl -H "Authorization: Bearer your_admin_token" \
    https://matrix.yourdomain.com/_synapse/admin/v1/statistics/users/media
    ```
 
 4. **Room cleanup** (as needed):
    ```bash
-   ./delete-room.sh list
-   ./delete-room.sh delete '#unused-room:matrix.yourdomain.com'
+   # Use admin tool for interactive management
+   python3 admin.py
+   # Select option 1 to list rooms, then option 2 to delete unused rooms
    ```
 
 ## Configuration Files
@@ -350,6 +409,7 @@ Logs are configured with rotation:
 - `nginx/nginx.conf`: Reverse proxy configuration
 - `cinny/config.json`: Web client configuration
 - `.env`: Environment variables (created from template)
+- `admin.py`: Administration tool
 
 ## Support
 
@@ -363,3 +423,4 @@ For deployment issues:
 - Verify DNS configuration
 - Confirm SSL/TLS setup
 - Review firewall settings
+- Use the admin tool for server diagnostics
