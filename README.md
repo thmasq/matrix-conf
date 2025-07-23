@@ -59,7 +59,7 @@ Update the following files to replace `matrix.tantalius.com` and `chat.tantalius
 
 **Files to update:**
 - `docker-compose.yml`
-- `synapse/homeserver.yaml`
+- `homeserver.yaml`
 - `nginx/nginx.conf`
 - `cinny/config.json`
 
@@ -76,7 +76,7 @@ xargs sed -i 's/chat\.tantalius\.com/chat.yourdomain.com/g'
 
 ### 4. Configure Admin Contact (Optional)
 
-Update the admin contact in `synapse/homeserver.yaml`:
+Update the admin contact in `homeserver.yaml`:
 ```yaml
 admin_contact: 'mailto:admin@yourdomain.com'
 ```
@@ -405,7 +405,7 @@ Logs are configured with rotation:
 ## Configuration Files
 
 - `docker-compose.yml`: Service orchestration
-- `synapse/homeserver.yaml`: Synapse configuration
+- `homeserver.yaml`: Synapse configuration
 - `nginx/nginx.conf`: Reverse proxy configuration
 - `cinny/config.json`: Web client configuration
 - `.env`: Environment variables (created from template)

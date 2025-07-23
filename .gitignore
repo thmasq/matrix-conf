@@ -3,3 +3,4 @@ synapse/*.log*
 synapse/*.config
 synapse/*.key
 synapse/media_store
+synapse/homeserver.yaml
