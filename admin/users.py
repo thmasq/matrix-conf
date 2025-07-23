@@ -222,7 +222,6 @@ class UserManager:
                 "http://",
                 "",
             )
-            server_name = server_name.removeprefix("matrix.")  # Remove 'matrix.' prefix
 
             user_id = f"@{username}:{server_name}"
 
