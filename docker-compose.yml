@@ -32,7 +32,7 @@ services:
       SYNAPSE_REPORT_STATS: "no"
     volumes:
       - ./synapse:/data:Z
-      - ./synapse/homeserver.yaml:/data/homeserver.yaml:ro,z
+      - ./homeserver.yaml:/data/homeserver.yaml:ro,z
       - ./synapse/log.config:/data/log.config:ro,z
     networks:
       - matrix_network
