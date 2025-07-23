@@ -1,5 +1,4 @@
-"""
-Matrix Server Administration Tool
+"""Matrix Server Administration Tool.
 
 A comprehensive administrative interface for Matrix/Synapse servers.
 Consolidates room management, user administration, and server monitoring.
