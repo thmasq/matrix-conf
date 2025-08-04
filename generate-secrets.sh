@@ -8,14 +8,14 @@ set -e
 echo "Generating secrets for Matrix deployment..."
 
 # Check if required files exist
-if [ ! -f "docker-compose.yml" ] || [ ! -f "synapse/homeserver.yaml" ] || [ ! -f ".env.example" ]; then
+if [ ! -f "docker-compose.yml" ] || [ ! -f "homeserver.yaml" ] || [ ! -f ".env.example" ]; then
     echo "Error: Required configuration files not found!"
     echo "Make sure you're in the correct directory with all Matrix configuration files."
     exit 1
 fi
 
 # Check if secrets are already generated
-if ! grep -q "{{" docker-compose.yml synapse/homeserver.yaml .env.example 2>/dev/null; then
+if ! grep -q "{{" docker-compose.yml homeserver.yaml .env.example 2>/dev/null; then
     echo "Warning: Secrets appear to already be generated (no placeholders found)"
     read -p "Do you want to regenerate all secrets? This will overwrite existing ones. (y/N): " -n 1 -r
     echo
@@ -37,24 +37,24 @@ echo "Replacing placeholders in configuration files..."
 
 # Create working copies
 cp docker-compose.yml docker-compose.yml.tmp
-cp synapse/homeserver.yaml synapse/homeserver.yaml.tmp
+cp homeserver.yaml homeserver.yaml.tmp
 cp .env.example .env.tmp
 
 # Replace placeholders in docker-compose.yml
 sed -i "s/{{POSTGRES_PASSWORD}}/$POSTGRES_PASSWORD/g" docker-compose.yml.tmp
 
-# Replace placeholders in synapse/homeserver.yaml
-sed -i "s/{{POSTGRES_PASSWORD}}/$POSTGRES_PASSWORD/g" synapse/homeserver.yaml.tmp
-sed -i "s/{{REGISTRATION_SHARED_SECRET}}/$REGISTRATION_SHARED_SECRET/g" synapse/homeserver.yaml.tmp
-sed -i "s/{{MACAROON_SECRET_KEY}}/$MACAROON_SECRET_KEY/g" synapse/homeserver.yaml.tmp
-sed -i "s/{{FORM_SECRET}}/$FORM_SECRET/g" synapse/homeserver.yaml.tmp
+# Replace placeholders in homeserver.yaml
+sed -i "s/{{POSTGRES_PASSWORD}}/$POSTGRES_PASSWORD/g" homeserver.yaml.tmp
+sed -i "s/{{REGISTRATION_SHARED_SECRET}}/$REGISTRATION_SHARED_SECRET/g" homeserver.yaml.tmp
+sed -i "s/{{MACAROON_SECRET_KEY}}/$MACAROON_SECRET_KEY/g" homeserver.yaml.tmp
+sed -i "s/{{FORM_SECRET}}/$FORM_SECRET/g" homeserver.yaml.tmp
 
 # Handle .env file - keep the ADMIN_TOKEN placeholder for manual setup
 sed -i "s/{{ADMIN_TOKEN}}/YOUR_ADMIN_TOKEN_HERE/g" .env.tmp
 
 # Move temporary files to final locations
 mv docker-compose.yml.tmp docker-compose.yml
-mv synapse/homeserver.yaml.tmp synapse/homeserver.yaml
+mv homeserver.yaml.tmp homeserver.yaml
 mv .env.tmp .env
 
 echo "Secrets generated and applied successfully!"
@@ -67,7 +67,7 @@ echo "  Form secret: ✓ Generated (64 chars)"
 echo ""
 echo "Files updated:"
 echo "  docker-compose.yml"
-echo "  synapse/homeserver.yaml"
+echo "  homeserver.yaml"
 echo "  .env (created from .env.example)"
 echo ""
 echo "IMPORTANT NEXT STEPS:"
