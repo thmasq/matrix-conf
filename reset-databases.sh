@@ -11,6 +11,9 @@ YELLOW='\033[1;33m'
 GREEN='\033[0;32m'
 NC='\033[0m' # No Color
 
+# Global variable to track if we've already shown the sudo warning
+SUDO_WARNING_SHOWN=false
+
 # Function to print colored output
 print_warning() {
     echo -e "${YELLOW}WARNING: $1${NC}"
@@ -44,10 +47,13 @@ check_docker_permissions() {
 # Function to run docker command with sudo if needed
 run_docker_cmd() {
     if check_docker_permissions; then
-        "$@"
+        docker "$@"
     else
-        print_warning "Docker requires elevated permissions. Running with sudo..."
-        sudo "$@"
+        if [ "$SUDO_WARNING_SHOWN" = false ]; then
+            print_warning "Docker requires elevated permissions. Using sudo for remaining commands..."
+            SUDO_WARNING_SHOWN=true
+        fi
+        sudo docker "$@"
     fi
 }
 
@@ -56,7 +62,10 @@ run_compose_cmd() {
     if check_docker_permissions; then
         docker-compose "$@"
     else
-        print_warning "Docker requires elevated permissions. Running with sudo..."
+        if [ "$SUDO_WARNING_SHOWN" = false ]; then
+            print_warning "Docker requires elevated permissions. Using sudo for remaining commands..."
+            SUDO_WARNING_SHOWN=true
+        fi
         sudo docker-compose "$@"
     fi
 }
@@ -91,6 +100,70 @@ if ! docker info >/dev/null 2>&1 && ! sudo docker info >/dev/null 2>&1; then
     echo "Please start Docker and try again."
     exit 1
 fi
+
+# Get the project name (directory name by default, keeping dashes)
+PROJECT_NAME=$(basename "$(pwd)" | tr '[:upper:]' '[:lower:]')
+
+# List of volumes to remove
+VOLUMES=(
+    "${PROJECT_NAME}_postgres_data"
+    "${PROJECT_NAME}_valkey_data"
+)
+
+echo "=========================================="
+echo "Volume Detection"
+echo "=========================================="
+echo
+
+print_info "Scanning for volumes with project name: $PROJECT_NAME"
+echo
+
+# Check what volumes actually exist
+print_info "Matrix-related volumes found on system:"
+EXISTING_VOLUMES=$(run_docker_cmd volume ls --format "{{.Name}}" | grep -E "(postgres|valkey)" || true)
+
+if [ -n "$EXISTING_VOLUMES" ]; then
+    echo "$EXISTING_VOLUMES" | while read -r volume; do
+        if [ -n "$volume" ]; then
+            echo "  • $volume"
+        fi
+    done
+else
+    print_info "  No postgres/valkey volumes found on system"
+fi
+
+echo
+
+# Check which of our expected volumes exist
+print_info "Volumes that will be targeted for deletion:"
+VOLUMES_TO_DELETE=()
+for volume in "${VOLUMES[@]}"; do
+    if run_docker_cmd volume ls -q | grep -q "^${volume}$"; then
+        echo "  ✓ $volume (exists - will be deleted)"
+        VOLUMES_TO_DELETE+=("$volume")
+    else
+        echo "  ✗ $volume (doesn't exist - will be skipped)"
+    fi
+done
+
+echo
+
+if [ ${#VOLUMES_TO_DELETE[@]} -eq 0 ]; then
+    print_info "No target volumes found to delete."
+    echo "If you have Matrix volumes with different names, you may need to remove them manually."
+    echo
+    echo "To see all volumes: docker volume ls"
+    echo "To remove a volume: docker volume rm VOLUME_NAME"
+    exit 0
+fi
+
+print_warning "Found ${#VOLUMES_TO_DELETE[@]} volume(s) that will be permanently deleted!"
+
+echo
+echo "=========================================="
+echo "Confirmation Required"
+echo "=========================================="
+echo
 
 print_warning "This script will permanently delete ALL Matrix database data!"
 echo
@@ -143,48 +216,43 @@ sleep 2
 echo
 print_info "Step 2: Removing database volumes..."
 
-# Get the project name (directory name by default)
-PROJECT_NAME=$(basename "$(pwd)" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]//g')
-
-# List of volumes to remove
-VOLUMES=(
-    "${PROJECT_NAME}_postgres_data"
-    "${PROJECT_NAME}_valkey_data"
-)
-
-for volume in "${VOLUMES[@]}"; do
-    if run_docker_cmd volume ls -q | grep -q "^${volume}$"; then
-        print_info "Removing volume: $volume"
-        if run_docker_cmd volume rm "$volume"; then
-            print_success "Removed volume: $volume"
-        else
-            print_error "Failed to remove volume: $volume"
-            echo "You may need to stop any remaining containers using this volume."
-            exit 1
-        fi
+# Remove the volumes we found earlier
+for volume in "${VOLUMES_TO_DELETE[@]}"; do
+    print_info "Removing volume: $volume"
+    if run_docker_cmd volume rm "$volume"; then
+        print_success "Removed volume: $volume"
     else
-        print_info "Volume $volume does not exist (already clean)"
+        print_error "Failed to remove volume: $volume"
+        echo "You may need to stop any remaining containers using this volume."
+        exit 1
     fi
 done
 
 # Step 3: Clean up any orphaned containers
 echo
-print_info "Step 3: Cleaning up any orphaned containers..."
-if run_docker_cmd container ls -a --filter "label=com.docker.compose.project=${PROJECT_NAME}" -q | grep -q .; then
-    print_info "Removing orphaned containers..."
-    run_docker_cmd container ls -a --filter "label=com.docker.compose.project=${PROJECT_NAME}" -q | xargs run_docker_cmd container rm -f
+print_info "Step 3: Cleaning up orphaned containers..."
+ORPHANED_CONTAINERS=$(run_docker_cmd container ls -a --filter "label=com.docker.compose.project=${PROJECT_NAME}" -q)
+if [ -n "$ORPHANED_CONTAINERS" ]; then
+    print_info "Found orphaned containers, removing..."
+    echo "$ORPHANED_CONTAINERS" | while read -r container_id; do
+        if [ -n "$container_id" ]; then
+            run_docker_cmd container rm -f "$container_id"
+        fi
+    done
     print_success "Orphaned containers removed"
 else
     print_info "No orphaned containers found"
 fi
 
-# Step 4: Clean up any orphaned networks
+# Step 4: Clean up networks
 echo
 print_info "Step 4: Cleaning up networks..."
 NETWORK_NAME="${PROJECT_NAME}_matrix_network"
 if run_docker_cmd network ls --filter "name=${NETWORK_NAME}" -q | grep -q .; then
     print_info "Removing network: $NETWORK_NAME"
-    run_docker_cmd network rm "$NETWORK_NAME" 2>/dev/null || print_info "Network removal not needed"
+    run_docker_cmd network rm "$NETWORK_NAME" 2>/dev/null || print_info "Network already removed"
+else
+    print_info "No networks to clean up"
 fi
 
 echo
