@@ -34,7 +34,7 @@ This repository provides a production-ready Matrix homeserver setup with the fol
 
 ```bash
 git clone https://github.com/thmasq/matrix-conf
-cd matrix-server
+cd matrix-conf
 ```
 
 ### 2. Generate Secrets
