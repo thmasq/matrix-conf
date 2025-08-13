@@ -58,12 +58,12 @@ class MatrixAdminApp:
         print(" 12. Test connection")
         print(" 13. Server information")
         print()
-        print("  q or 0. Exit")
+        print("  0. Exit")
 
     def handle_menu_choice(self, choice: str) -> bool:
         """Handle menu choice. Returns False if should exit."""
         try:
-            if choice == "0" or "q":
+            if choice == "0":
                 self.screen_manager.clear_screen()
                 print("Goodbye!")
                 return False
