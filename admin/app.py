@@ -27,7 +27,9 @@ class MatrixAdminApp:
         self.room_manager = RoomManager(self.client, self.screen_manager)
         self.user_manager = UserManager(self.client, self.screen_manager)
         self.stats_manager = StatsManager(self.client, self.screen_manager)
-        self.token_manager = TokenManager(self.client, self.screen_manager)  # Add this line
+        self.token_manager = TokenManager(
+            self.client, self.screen_manager
+        )  # Add this line
 
         # Setup configuration if needed
         if not self.client.base_url or not self.client.admin_token:

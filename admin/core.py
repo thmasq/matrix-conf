@@ -82,7 +82,7 @@ class MatrixClient:
                 f"/_matrix/client/r0/directory/room/{encoded_alias}",
             )
             return response.get("room_id") if response else None
-        except:
+        except Exception:
             return None
 
     def resolve_room_identifier(self, identifier: str) -> tuple[str, str]:

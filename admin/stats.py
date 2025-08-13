@@ -26,7 +26,7 @@ class StatsManager:
                     "/_synapse/admin/v2/users?limit=1",
                 )
                 stats["total_users"] = users_response.get("total", 0)
-            except:
+            except Exception:
                 stats["total_users"] = "N/A"
 
             # Room count
@@ -36,7 +36,7 @@ class StatsManager:
                     "/_synapse/admin/v1/rooms?limit=1",
                 )
                 stats["total_rooms"] = rooms_response.get("total_rooms", 0)
-            except:
+            except Exception:
                 stats["total_rooms"] = "N/A"
 
             # Media statistics
@@ -51,7 +51,7 @@ class StatsManager:
                 else:
                     stats["media_count"] = "N/A"
                     stats["media_size"] = "N/A"
-            except:
+            except Exception:
                 stats["media_count"] = "N/A"
                 stats["media_size"] = "N/A"
 
@@ -101,7 +101,7 @@ class StatsManager:
                     print(f"Active Users: {len(active_users)}")
                     print(f"Admin Users: {len(admin_users)}")
                     print(f"Deactivated Users: {len(deactivated_users)}")
-            except:
+            except Exception:
                 print("User breakdown: N/A")
 
             # Room activity breakdown
@@ -135,7 +135,7 @@ class StatsManager:
                     total_members = sum(r.get("joined_members", 0) for r in all_rooms)
                     avg_room_size = total_members / len(all_rooms) if all_rooms else 0
                     print(f"Average Room Size: {avg_room_size:.1f} members")
-            except:
+            except Exception:
                 print("Room breakdown: N/A")
 
         except Exception as e:
@@ -191,7 +191,7 @@ class StatsManager:
                 )
                 if version_response and "server_version" in version_response:
                     print(f"Synapse Version: {version_response['server_version']}")
-            except:
+            except Exception:
                 print("Synapse Version: Unable to retrieve")
 
             # Try to get current admin user
@@ -202,7 +202,7 @@ class StatsManager:
                 )
                 if whoami_response and "user_id" in whoami_response:
                     print(f"Connected as: {whoami_response['user_id']}")
-            except:
+            except Exception:
                 print("Connected as: Unable to retrieve")
 
             # Test various endpoints
