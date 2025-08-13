@@ -110,11 +110,6 @@ class TokenManager:
         successful_tokens = []
         failed_tokens = []
         
-        # Determine chat domain for registration URLs
-        server_name = self.client.base_url.replace("https://", "").replace("http://", "")
-        chat_domain = server_name.replace("matrix.", "chat.")
-        base_url = self.client.base_url.replace("matrix.", "chat.")
-        
         for i in range(token_count):
             try:
                 # Generate unique token
@@ -135,10 +130,8 @@ class TokenManager:
                 )
 
                 if response:
-                    registration_url = f"{base_url}/#/register?token={token}"
                     successful_tokens.append({
                         "token": token,
-                        "url": registration_url,
                         "uses_allowed": uses_allowed,
                         "expiry_time": expiry_time,
                         "expiry_description": expiry_description
@@ -166,14 +159,11 @@ class TokenManager:
                     f.write("\n")
                     
                     for i, token_info in enumerate(successful_tokens, 1):
-                        f.write(f"Token {i}:\n")
-                        f.write(f"  Registration URL: {token_info['url']}\n")
-                        f.write(f"  Token: {token_info['token']}\n")
-                        f.write("\n")
+                        f.write(f"Token {i}: {token_info['token']}\n")
                     
                     f.write("\n" + "=" * 50 + "\n")
                     f.write("SECURITY NOTES:\n")
-                    f.write("- Keep these tokens secure - anyone with a URL can register\n")
+                    f.write("- Keep these tokens secure - anyone with a token can register\n")
                     f.write("- Share only with trusted users\n")
                     f.write("- Monitor token usage through the admin interface\n")
                     f.write("- Delete unused tokens when no longer needed\n")
@@ -192,15 +182,15 @@ class TokenManager:
         print(f"Failed: {len(failed_tokens)}")
 
         if successful_tokens:
-            print(f"\nExample registration URL:")
-            print(f"{successful_tokens[0]['url']}")
+            print(f"\nExample token:")
+            print(f"{successful_tokens[0]['token']}")
             
         if failed_tokens:
             print(f"\nFailed tokens:")
             for failure in failed_tokens:
                 print(f"  - {failure}")
 
-        print(f"\nAll successful tokens and URLs saved to: {filename}")
+        print(f"\nAll successful tokens saved to: {filename}")
         print("⚠️  Keep the token file secure - treat it like a password file!")
 
         self.screen_manager.pause_for_input()
@@ -336,10 +326,6 @@ class TokenManager:
 
             print(f"\nExporting {len(filtered_tokens)} tokens ({filter_description})...")
 
-            # Determine chat domain for registration URLs
-            server_name = self.client.base_url.replace("https://", "").replace("http://", "")
-            base_url = self.client.base_url.replace("matrix.", "chat.")
-
             try:
                 with open(filename, 'w') as f:
                     f.write("Matrix Registration Tokens (Exported)\n")
@@ -357,11 +343,7 @@ class TokenManager:
                         pending = token_info.get("pending", 0)
                         expiry_time = token_info.get("expiry_time")
                         
-                        registration_url = f"{base_url}/#/register?token={token}"
-                        
-                        f.write(f"Token {i}:\n")
-                        f.write(f"  Registration URL: {registration_url}\n")
-                        f.write(f"  Token: {token}\n")
+                        f.write(f"Token {i}: {token}\n")
                         
                         if uses_allowed is None:
                             f.write(f"  Uses: Unlimited (completed: {completed}, pending: {pending})\n")
@@ -380,7 +362,7 @@ class TokenManager:
                     
                     f.write("\n" + "=" * 50 + "\n")
                     f.write("SECURITY NOTES:\n")
-                    f.write("- Keep these tokens secure - anyone with a URL can register\n")
+                    f.write("- Keep these tokens secure - anyone with a token can register\n")
                     f.write("- Share only with trusted users\n")
                     f.write("- Monitor token usage through the admin interface\n")
                     f.write("- Delete unused tokens when no longer needed\n")
