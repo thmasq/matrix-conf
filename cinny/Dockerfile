@@ -1,5 +1,5 @@
 # Builder
-FROM node:20.12.2-alpine3.18 as builder
+FROM node:20.20.0-alpine3.22 as builder
 
 # Install git
 RUN apk add --no-cache git
@@ -8,7 +8,7 @@ RUN apk add --no-cache git
 WORKDIR /src
 
 # Clone the specific repository and branch
-RUN git clone --depth 1 --branch dev https://github.com/GigiaJ/cinny.git .
+RUN git clone --depth 1 --branch custom-dev https://github.com/thmasq/cinny.git .
 
 # Copy our custom config to overwrite the repository's config before building
 COPY config.json /src/config.json
@@ -23,7 +23,7 @@ ENV NODE_OPTIONS=--max_old_space_size=4096
 RUN npm run build
 
 # App
-FROM nginx:1.27.4-alpine
+FROM nginx:1.29.5-alpine
 
 # Copy built files and nginx config from the repository
 COPY --from=builder /src/dist /app
