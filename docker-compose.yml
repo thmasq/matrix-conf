@@ -7,6 +7,7 @@ services:
       POSTGRES_USER: synapse
       POSTGRES_PASSWORD: {{POSTGRES_PASSWORD}}
       POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --lc-collate=C --lc-ctype=C"
+      PGDATA: /var/lib/postgresql/data/pgdata
     volumes:
       - postgres_data:/var/lib/postgresql/data:Z
     networks:
