@@ -1,3 +1,0 @@
-# Allow only the files we need
-!Dockerfile
-!config.json
