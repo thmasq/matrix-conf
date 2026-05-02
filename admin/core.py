@@ -32,6 +32,7 @@ class MatrixClient:
         headers = {
             "Authorization": f"Bearer {self.admin_token}",
             "Content-Type": "application/json",
+            "User-Agent": "MatrixAdminTool",
         }
 
         try:

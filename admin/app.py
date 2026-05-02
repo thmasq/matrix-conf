@@ -5,7 +5,7 @@ import sys
 from .core import ConfigManager, MatrixClient
 from .rooms import RoomManager
 from .stats import StatsManager
-from .tokens import TokenManager  # Add this import
+from .tokens import TokenManager
 from .ui import ScreenManager
 from .users import UserManager
 
