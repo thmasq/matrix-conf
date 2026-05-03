@@ -558,3 +558,72 @@ class UserManager:
             print(f"Error deactivating user: {e}")
 
         self.screen_manager.pause_for_input()
+
+    def reset_password(self) -> None:
+        """Reset a user's password with interactive selection."""
+        self.screen_manager.show_header("Reset User Password")
+
+        print("How would you like to select the user?")
+        print("  1. Select from list")
+        print("  2. Enter user ID manually")
+        print("  0. Cancel")
+
+        choice = input("\nSelect option (0-2): ").strip()
+        if choice == "0":
+            return
+
+        user_id = None
+        if choice == "1":
+            selected_users = self.select_users_for_deactivation()
+            if not selected_users:
+                print("No user selected.")
+                self.screen_manager.pause_for_input()
+                return
+            if len(selected_users) > 1:
+                print("Please select only ONE user for password reset.")
+                self.screen_manager.pause_for_input()
+                return
+            user_id = selected_users[0]["name"]
+        elif choice == "2":
+            user_id = input("Enter user ID (e.g., @username:domain.com): ").strip()
+            if not user_id:
+                print("User ID required.")
+                self.screen_manager.pause_for_input()
+                return
+        else:
+            print("Invalid option.")
+            self.screen_manager.pause_for_input()
+            return
+
+        password = getpass.getpass(f"\nNew Password for {user_id}: ")
+        if not password:
+            print("Password required.")
+            self.screen_manager.pause_for_input()
+            return
+
+        confirm_password = getpass.getpass("Confirm Password: ")
+        if password != confirm_password:
+            print("Passwords do not match.")
+            self.screen_manager.pause_for_input()
+            return
+
+        logout_devices = (
+            input("Logout all devices? (y/n) [default: y]: ").strip().lower() != "n"
+        )
+
+        print(f"\nResetting password for {user_id}...")
+        try:
+            reset_data = {"new_password": password, "logout_devices": logout_devices}
+            response = self.client.make_request(
+                "POST",
+                f"/_synapse/admin/v1/reset_password/{user_id}",
+                reset_data,
+            )
+            if response is not None:
+                print("Password reset successfully!")
+            else:
+                print("Failed to reset password. Check user ID and permissions.")
+        except Exception as e:
+            print(f"Error resetting password: {e}")
+
+        self.screen_manager.pause_for_input()

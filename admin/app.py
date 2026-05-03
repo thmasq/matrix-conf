@@ -48,17 +48,18 @@ class MatrixAdminApp:
         print("  4. List all users")
         print("  5. Create new user")
         print("  6. Deactivate user")
+        print("  7. Reset user password")
         print()
         print("Registration Tokens:")
-        print("  7. Create registration tokens (batch)")
-        print("  8. List registration tokens")
-        print("  9. Export existing tokens to file")
-        print(" 10. Delete registration token")
+        print("  8. Create registration tokens (batch)")
+        print("  9. List registration tokens")
+        print(" 10. Export existing tokens to file")
+        print(" 11. Delete registration token")
         print()
         print("Server Information:")
-        print(" 11. Show server statistics")
-        print(" 12. Test connection")
-        print(" 13. Server information")
+        print(" 12. Show server statistics")
+        print(" 13. Test connection")
+        print(" 14. Server information")
         print()
         print("  0. Exit")
 
@@ -82,18 +83,20 @@ class MatrixAdminApp:
             elif choice == "6":
                 self.user_manager.deactivate_user()
             elif choice == "7":
-                self.token_manager.create_registration_token()
+                self.user_manager.reset_password()
             elif choice == "8":
-                self.token_manager.list_registration_tokens()
+                self.token_manager.create_registration_token()
             elif choice == "9":
-                self.token_manager.export_existing_tokens()
+                self.token_manager.list_registration_tokens()
             elif choice == "10":
-                self.token_manager.delete_registration_token()
+                self.token_manager.export_existing_tokens()
             elif choice == "11":
-                self.stats_manager.show_server_stats()
+                self.token_manager.delete_registration_token()
             elif choice == "12":
-                self.stats_manager.test_connection_interactive()
+                self.stats_manager.show_server_stats()
             elif choice == "13":
+                self.stats_manager.test_connection_interactive()
+            elif choice == "14":
                 self.stats_manager.show_server_info()
             else:
                 self.screen_manager.show_header("Invalid Option")
@@ -124,7 +127,7 @@ class MatrixAdminApp:
         while True:
             try:
                 self.show_menu()
-                choice = input("\nSelect option (0-13): ").strip()
+                choice = input("\nSelect option (0-14): ").strip()
 
                 if not self.handle_menu_choice(choice):
                     break
