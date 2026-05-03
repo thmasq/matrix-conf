@@ -43,23 +43,24 @@ class MatrixAdminApp:
         print("  1. List all rooms")
         print("  2. Delete room")
         print("  3. Fix room permissions (Element Call)")
+        print("  4. Force join user to room")
         print()
         print("User Management:")
-        print("  4. List all users")
-        print("  5. Create new user")
-        print("  6. Deactivate user")
-        print("  7. Reset user password")
+        print("  5. List all users")
+        print("  6. Create new user")
+        print("  7. Deactivate user")
+        print("  8. Reset user password")
         print()
         print("Registration Tokens:")
-        print("  8. Create registration tokens (batch)")
-        print("  9. List registration tokens")
-        print(" 10. Export existing tokens to file")
-        print(" 11. Delete registration token")
+        print("  9. Create registration tokens (batch)")
+        print(" 10. List registration tokens")
+        print(" 11. Export existing tokens to file")
+        print(" 12. Delete registration token")
         print()
         print("Server Information:")
-        print(" 12. Show server statistics")
-        print(" 13. Test connection")
-        print(" 14. Server information")
+        print(" 13. Show server statistics")
+        print(" 14. Test connection")
+        print(" 15. Server information")
         print()
         print("  0. Exit")
 
@@ -77,26 +78,28 @@ class MatrixAdminApp:
             elif choice == "3":
                 self.room_manager.fix_room_permissions()
             elif choice == "4":
-                self.user_manager.list_users()
+                self.room_manager.force_join_user()
             elif choice == "5":
-                self.user_manager.create_user()
+                self.user_manager.list_users()
             elif choice == "6":
-                self.user_manager.deactivate_user()
+                self.user_manager.create_user()
             elif choice == "7":
-                self.user_manager.reset_password()
+                self.user_manager.deactivate_user()
             elif choice == "8":
-                self.token_manager.create_registration_token()
+                self.user_manager.reset_password()
             elif choice == "9":
-                self.token_manager.list_registration_tokens()
+                self.token_manager.create_registration_token()
             elif choice == "10":
-                self.token_manager.export_existing_tokens()
+                self.token_manager.list_registration_tokens()
             elif choice == "11":
-                self.token_manager.delete_registration_token()
+                self.token_manager.export_existing_tokens()
             elif choice == "12":
-                self.stats_manager.show_server_stats()
+                self.token_manager.delete_registration_token()
             elif choice == "13":
-                self.stats_manager.test_connection_interactive()
+                self.stats_manager.show_server_stats()
             elif choice == "14":
+                self.stats_manager.test_connection_interactive()
+            elif choice == "15":
                 self.stats_manager.show_server_info()
             else:
                 self.screen_manager.show_header("Invalid Option")
@@ -127,7 +130,7 @@ class MatrixAdminApp:
         while True:
             try:
                 self.show_menu()
-                choice = input("\nSelect option (0-14): ").strip()
+                choice = input("\nSelect option (0-15): ").strip()
 
                 if not self.handle_menu_choice(choice):
                     break

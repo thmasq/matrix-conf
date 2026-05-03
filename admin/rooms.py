@@ -1,7 +1,7 @@
 """Room management functionality for Matrix administration."""
 
 import time
-
+import urllib.parse
 from .core import MatrixClient
 from .ui import FilterSortUI, ScreenManager, TerminalPaginator
 from .utils import DataFormatter, ProgressMonitor, SelectionParser
@@ -757,3 +757,207 @@ class RoomManager:
 
         except Exception as e:
             print(f"Error fixing all room permissions: {e}")
+
+    def force_join_user(self) -> None:
+        """Forcefully add one or multiple users to a room."""
+        self.screen_manager.show_header("Force Join User to Room")
+
+        print("Target Room Selection:")
+        print("  1. Search/Select from list")
+        print("  2. Enter room ID/alias manually")
+        print("  0. Cancel")
+
+        room_choice = input("\nSelect option (0-2): ").strip()
+        if room_choice == "0":
+            return
+
+        room_id = ""
+        display_name = ""
+
+        if room_choice == "1":
+            try:
+                response = self.client.make_request("GET", "/_synapse/admin/v1/rooms")
+                all_rooms = response.get("rooms", [])
+
+                search_term = (
+                    input("\nEnter room name, alias, or ID to search: ").strip().lower()
+                )
+                matches = []
+                for r in all_rooms:
+                    name = (r.get("name") or "").lower()
+                    alias = (r.get("canonical_alias") or "").lower()
+                    r_id = (r.get("room_id") or "").lower()
+                    if (
+                        search_term in name
+                        or search_term in alias
+                        or search_term in r_id
+                    ):
+                        matches.append(r)
+
+                if not matches:
+                    print("No matching rooms found.")
+                    self.screen_manager.pause_for_input()
+                    return
+
+                print(f"\nFound {len(matches)} matching rooms (showing up to 20):")
+                for i, r in enumerate(matches[:20], 1):
+                    r_name = r.get("name", "Unnamed room")
+                    r_alias = r.get("canonical_alias", "No alias")
+                    print(f"{i:2d}. {r_name} | {r_alias} | {r['room_id']}")
+
+                sel = input(
+                    f"\nSelect room number (1-{min(20, len(matches))}): "
+                ).strip()
+                try:
+                    idx = int(sel) - 1
+                    if 0 <= idx < len(matches[:20]):
+                        selected_room = matches[idx]
+                        room_id = selected_room["room_id"]
+                        display_name = selected_room.get("name", room_id)
+                    else:
+                        raise ValueError()
+                except ValueError:
+                    print("Invalid selection.")
+                    self.screen_manager.pause_for_input()
+                    return
+
+            except Exception as e:
+                print(f"Error fetching rooms: {e}")
+                self.screen_manager.pause_for_input()
+                return
+
+        elif room_choice == "2":
+            room_input = input(
+                "\nEnter room ID or alias (e.g., !id:domain.com or #alias:domain.com): "
+            ).strip()
+            if not room_input:
+                print("No room specified.")
+                self.screen_manager.pause_for_input()
+                return
+            try:
+                room_id, display_name = self.client.resolve_room_identifier(room_input)
+            except Exception as e:
+                print(f"Error resolving room: {e}")
+                self.screen_manager.pause_for_input()
+                return
+        else:
+            print("Invalid option.")
+            self.screen_manager.pause_for_input()
+            return
+
+        print(f"\nSelected Target Room: {display_name} ({room_id})")
+        print("-" * 50)
+
+        print("\nUser Selection:")
+        print("  1. Search/Select from list (Supports multiple via ranges/commas)")
+        print("  2. Enter user IDs manually (Supports comma-separated IDs)")
+        print("  0. Cancel")
+
+        user_choice = input("\nSelect option (0-2): ").strip()
+        if user_choice == "0":
+            return
+
+        target_users = []
+
+        if user_choice == "1":
+            try:
+                response = self.client.make_request("GET", "/_synapse/admin/v2/users")
+                all_users = response.get("users", [])
+
+                search_term = (
+                    input("\nEnter username or display name to search: ")
+                    .strip()
+                    .lower()
+                )
+                matches = []
+                for u in all_users:
+                    u_id = (u.get("name") or "").lower()
+                    u_disp = (u.get("displayname") or "").lower()
+                    if search_term in u_id or search_term in u_disp:
+                        matches.append(u)
+
+                if not matches:
+                    print("No matching users found.")
+                    self.screen_manager.pause_for_input()
+                    return
+
+                max_display = min(20, len(matches))
+                print(
+                    f"\nFound {len(matches)} matching users (showing up to {max_display}):"
+                )
+                for i, u in enumerate(matches[:max_display], 1):
+                    u_name = u.get("name", "Unknown ID")
+                    u_disp = u.get("displayname", "No display name")
+                    print(f"{i:2d}. {u_disp} ({u_name})")
+
+                print("\nSelection Examples: '1', '1-3', '1,3,5', '1-3,5'")
+                sel = input(f"Select user(s) (1-{max_display}): ").strip()
+
+                try:
+                    # Using the built-in SelectionParser from admin/utils.py
+                    selected_indices = SelectionParser.parse_selection(sel, max_display)
+                    if not selected_indices:
+                        print("No valid selection made.")
+                        self.screen_manager.pause_for_input()
+                        return
+
+                    for idx in selected_indices:
+                        target_users.append(matches[idx - 1]["name"])
+
+                except ValueError as e:
+                    print(f"Invalid selection: {e}")
+                    self.screen_manager.pause_for_input()
+                    return
+
+            except Exception as e:
+                print(f"Error fetching users: {e}")
+                self.screen_manager.pause_for_input()
+                return
+
+        elif user_choice == "2":
+            manual_input = input(
+                "\nEnter User IDs separated by commas (e.g., @bot1:domain.com, @bot2:domain.com): "
+            ).strip()
+            if not manual_input:
+                print("No user IDs specified.")
+                self.screen_manager.pause_for_input()
+                return
+            target_users = [u.strip() for u in manual_input.split(",") if u.strip()]
+        else:
+            print("Invalid option.")
+            self.screen_manager.pause_for_input()
+            return
+
+        print(f"\nSelected {len(target_users)} User(s):")
+        for u in target_users:
+            print(f"  - {u}")
+        print("-" * 50)
+
+        encoded_room = urllib.parse.quote(room_id, safe="")
+        print(f"\nExecuting Join Requests for room {display_name}...")
+
+        success_count = 0
+        failed_count = 0
+
+        for user_id in target_users:
+            print(f"Attempting to join {user_id}... ", end="")
+            try:
+                join_data = {"user_id": user_id}
+                response = self.client.make_request(
+                    "POST", f"/_synapse/admin/v1/join/{encoded_room}", join_data
+                )
+
+                if response and "room_id" in response:
+                    print("Success!")
+                    success_count += 1
+                else:
+                    print("Unexpected response.")
+                    failed_count += 1
+            except Exception as e:
+                print(f"Failed: {e}")
+                failed_count += 1
+
+        print(
+            f"\nOperation Complete. Successfully joined: {success_count}, Failed: {failed_count}"
+        )
+        self.screen_manager.pause_for_input()
